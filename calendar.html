@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Calendar</h1>
+        <div class="calendar-container">
+            <div class="calendar">
+                <button class="nav-btn" id="prevMonth">&#60;</button>
+                <h2 id="calendarTitle">March 2025</h2>
+                <button class="nav-btn" id="nextMonth">&#62;</button>
+                <table id="calendarTable">
+                    <tr>
+                        <th>Su</th> <th>Mo</th> <th>Tu</th> <th>We</th> <th>Th</th> <th>Fr</th> <th>Sa</th>
+                    </tr>
+                    <tr>
+                        <td></td><td></td><td></td><td></td><td></td><td>1</td><td></td>
+                    </tr>
+                    <tr>
+                        <td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td class="selected">7</td><td>8</td>
+                    </tr>
+                    <tr>
+                        <td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td>
+                    </tr>
+                    <tr>
+                        <td>16</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="schedule">
+                <h2 id="scheduleTitle">March 6, 2025</h2>
+                <div class="events" id="eventsList">
+                    <div class="event highlight">Review Notes <span>9:00 AM - 10:00 AM</span></div>
+                    <div class="event">Study Session 1 <span>10:00 AM - 11:30 AM</span></div>
+                    <div class="event">Break <span>11:00 AM - 11:30 AM</span></div>
+                    <div class="event">Study Session 2 <span>12:00 PM - 1:30 PM</span></div>
+                    <div class="event">Exercise <span>4:00 PM - 5:00 PM</span></div>
+                </div>
+                <div class="buttons">
+                    <button class="clear" id="clearEvents">Clear Events</button>
+                    <button class="auto" id="autoSchedule">Auto Schedule</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
+

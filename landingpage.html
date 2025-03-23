@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeSync</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background: linear-gradient(to bottom, #A8E6FF, #FFFFFF);
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .navbar .brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .navbar .auth-buttons a {
+            margin-left: 15px;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .navbar .login {
+            background: #007bff;
+            color: white;
+        }
+        .navbar .signup {
+            background: #28A745;
+            color: white;
+        }
+        .hero {
+            background: #007bff;
+            color: white;
+            padding: 50px 20px;
+        }
+        .hero button {
+            background: white;
+            color: #007bff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .features, .how-it-works, .cta {
+            padding: 40px 20px;
+        }
+        .feature-grid, .steps {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .feature, .step {
+            background: white;
+            padding: 20px;
+            width: 250px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #E0E0E0;
+        }
+        .cta button {
+            background: #28A745;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .cta button:hover {
+            background: #218838;
+        }
+        .feature h3, .step h3 {
+            color: #333333;
+        }
+        .highlight {
+            background: #F7D046;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        footer {
+            background: #333;
+            color: white;
+            padding: 10px;
+        }
+        footer a {
+            color: #FFC107;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="brand">TimeSync</div>
+        <div class="auth-buttons">
+            <a href="#" class="login">Login</a>
+            <a href="#" class="signup">Sign Up</a>
+        </div>
+    </nav>
+
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <h1>Plan Your Day with Ease!</h1>
+        <p>An AI-powered scheduler that organizes your daily tasks based on your energy levels.</p>
+        <button onclick="location.href='calendar.html'">Get Started</button>
+    </header>
+
+
+    <!-- Features Section -->
+    <section class="features">
+        <h2>Why Choose Our Scheduler?</h2>
+        <div class="feature-grid">
+            <div class="feature">
+                <h3>📅 Auto Scheduling</h3>
+                <p>AI-powered suggestions based on your routine.</p>
+            </div>
+            <div class="feature">
+                <h3>✏️ Manual Event Entry</h3>
+                <p>Easily add and adjust your events.</p>
+            </div>
+            <div class="feature">
+                <h3>⚡ Energy-Based Planning</h3>
+                <p>Tasks scheduled based on your peak focus hours.</p>
+            </div>
+            <div class="feature">
+                <h3>☁️ Cloud Sync</h3>
+                <p>Access your schedule from any device.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- How It Works Section -->
+    <section class="how-it-works">
+        <h2>How It Works</h2>
+        <div class="steps">
+            <div class="step">
+                <h3>1️⃣ Select a Date</h3>
+                <p>Pick a day from the interactive calendar.</p>
+            </div>
+            <div class="step">
+                <h3>2️⃣ Add or Auto-Schedule Events</h3>
+                <p>Manually enter events or let AI auto-schedule.</p>
+            </div>
+            <div class="step">
+                <h3>3️⃣ Customize Your Timetable</h3>
+                <p>Drag, edit, or adjust time slots as needed.</p>
+            </div>
+            <div class="step">
+                <h3>4️⃣ Track and Adjust</h3>
+                <p>Stay updated with real-time modifications.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Call to Action -->
+    <section class="cta">
+        <h2>Start Scheduling Now</h2>
+        <button onclick="location.href='calendar.html'">Try It Now</button>
+    </section>
+
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 AI Scheduler | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+    </footer>
+</body>
+</html>

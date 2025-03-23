@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productivity Insights</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        html, body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #A8E6FF, #FFFFFF);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            text-align: center;
+            overflow: hidden;
+            padding: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Productivity Insights</h2>
+        <div class="stats">
+            <div class="card"><strong>Tasks Completed</strong><br> 248 <br>12% increase</div>
+            <div class="card"><strong>Tasks Skipped</strong><br> 32 <br>8% decrease</div>
+            <div class="card"><strong>Avg. Completion Time</strong><br> 45m <br>Stable</div>
+            <div class="card"><strong>Productivity Score</strong><br> 8.4 <br>5% increase</div>
+        </div>
+        <div class="stats">
+            <div class="card"><strong>Recommended Work Hours</strong><br> Peak Performance: 9:00 AM - 11:00 AM</div>
+            <div class="card"><strong>Productivity Insights</strong><br> Most Productive Day: Tuesday (87%)<br> Best Focus Time: 9:00 AM - 11:00 AM</div>
+        </div>
+        <div class="chart-container">
+            <canvas id="productivityChart"></canvas>
+        </div>
+    </div>
+
+
+    <script>
+        const ctx = document.getElementById('productivityChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Completed Tasks',
+                    data: [40, 50, 60, 70, 65, 75, 72],
+                    backgroundColor: 'green'
+                }, {
+                    label: 'Skipped Tasks',
+                    data: [5, 6, 7, 8, 6, 7, 6],
+                    backgroundColor: 'red'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
+

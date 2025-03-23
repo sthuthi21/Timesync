@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Sign Up</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #A8E6FF, #FFFFFF);
+            margin: 0;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: #007bff;
+            color: white;
+        }
+        .navbar .brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .navbar .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+            margin: 50px auto;
+        }
+        h2 {
+            color: #007bff;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #E0E0E0;
+            border-radius: 5px;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .login-btn {
+            background: #007bff;
+            color: white;
+        }
+        .signup-btn {
+            background: #28A745;
+            color: white;
+        }
+        .google-btn {
+            background: white;
+            color: #555;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .google-btn img {
+            width: 20px;
+            margin-right: 10px;
+        }
+        .switch {
+            margin-top: 15px;
+        }
+        .switch a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">TimeSync</div>
+        <div class="nav-links">
+            <a href="signin_login.html">Login</a>
+            <a href="signin_login.html">Sign Up</a>
+        </div>
+    </nav>
+    <div class="container" id="auth-container">
+        <h2 id="form-title">Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button class="btn login-btn" id="auth-btn">Login</button>
+        <button class="btn google-btn">
+            <img src="https://img.icons8.com/color/48/000000/google-logo.png"/> Sign in with Google
+        </button>
+        <p class="switch">Don't have an account? <a href="#" id="toggle-form">Sign Up</a></p>
+    </div>
+    <script>
+        const toggleForm = document.getElementById('toggle-form');
+        const formTitle = document.getElementById('form-title');
+        const authBtn = document.getElementById('auth-btn');
+        const switchText = document.querySelector('.switch');
+
+
+        toggleForm.addEventListener('click', function(event) {
+            event.preventDefault();
+            if (formTitle.innerText === 'Login') {
+                formTitle.innerText = 'Sign Up';
+                authBtn.innerText = 'Sign Up';
+                authBtn.classList.remove('login-btn');
+                authBtn.classList.add('signup-btn');
+                switchText.innerHTML = 'Already have an account? <a href="#" id="toggle-form">Login</a>';
+            } else {
+                formTitle.innerText = 'Login';
+                authBtn.innerText = 'Login';
+                authBtn.classList.remove('signup-btn');
+                authBtn.classList.add('login-btn');
+                switchText.innerHTML = "Don't have an account? <a href='#' id='toggle-form'>Sign Up</a>";
+            }
+        });
+    </script>
+</body>
+</html>

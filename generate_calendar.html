@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timesync Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #1E90FF, #90EE90);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+
+        .dashboard {
+            max-width: 900px;
+            margin: auto;
+            display: flex;
+            gap: 20px;
+        }
+
+
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            text-align: left;
+        }
+
+
+        .box h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+
+        .priority {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+
+        .add-btn {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+
+        .add-btn:hover {
+            background: #0056b3;
+        }
+
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+
+        .schedule-table th, .schedule-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+
+        .schedule-table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+
+        .high-priority {
+            color: red;
+            font-weight: bold;
+        }
+
+
+        .pending {
+            color: orange;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+
+    <h2>Timesync Dashboard</h2>
+
+
+    <div class="dashboard">
+        <!-- Left Box: Create Schedule -->
+        <div class="box">
+            <h3>Create Your Schedule</h3>
+            <label>Available Time Slot</label>
+            <input type="time" id="startTime" value="09:00">
+            <input type="time" id="endTime" value="17:00">
+
+
+            <label>Tasks</label>
+            <input type="text" id="taskInput" placeholder="Enter task">
+           
+            <label>Priority & Duration</label>
+            <div class="priority">
+                <select id="priority">
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+                <input type="text" id="duration" placeholder="Duration (e.g., 1h)">
+            </div>
+
+
+            <label>Break Preferences</label>
+            <select id="breakPref">
+                <option>Every 1 hour</option>
+                <option>Every 2 hours</option>
+                <option>Every 3 hours</option>
+            </select>
+
+
+            <select id="breakDuration">
+                <option>5 minutes</option>
+                <option>10 minutes</option>
+                <option>15 minutes</option>
+            </select>
+
+
+            <button class="add-btn" onclick="addTask()">Generate Timetable</button>
+        </div>
+
+
+        <!-- Right Box: Your Schedule -->
+        <div class="box">
+            <h3>Your Schedule</h3>
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Task</th>
+                        <th>Priority</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody">
+                    <tr>
+                        <td>09:00 - 10:00</td>
+                        <td>Study DSA</td>
+                        <td class="high-priority">High</td>
+                        <td>1h</td>
+                        <td class="pending">Pending</td>
+                    </tr>
+                    <tr>
+                        <td>10:00 - 10:10</td>
+                        <td>Break</td>
+                        <td>-</td>
+                        <td>10m</td>
+                        <td class="pending">Pending</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <script>
+        function addTask() {
+            let taskName = document.getElementById("taskInput").value;
+            let priority = document.getElementById("priority").value;
+            let duration = document.getElementById("duration").value;
+            let scheduleBody = document.getElementById("scheduleBody");
+
+
+            if (taskName === "" || duration === "") {
+                alert("Please enter both task name and duration!");
+                return;
+            }
+
+
+            let priorityClass = priority === "High" ? "high-priority" : "";
+            let newRow = `
+                <tr>
+                    <td>--:--</td>
+                    <td>${taskName}</td>
+                    <td class="${priorityClass}">${priority}</td>
+                    <td>${duration}</td>
+                    <td class="pending">Pending</td>
+                </tr>
+            `;
+
+
+            scheduleBody.innerHTML += newRow;
+            document.getElementById("taskInput").value = "";
+            document.getElementById("duration").value = "";
+        }
+    </script>
+
+
+</body>
+</html>
