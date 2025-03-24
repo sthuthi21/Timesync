@@ -19,19 +19,6 @@
             background: #007bff;
             color: white;
         }
-        .navbar .brand {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .navbar .nav-links {
-            display: flex;
-            gap: 20px;
-        }
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-        }
         .container {
             background: white;
             padding: 30px;
@@ -67,66 +54,66 @@
             background: #28A745;
             color: white;
         }
-        .google-btn {
-            background: white;
-            color: #555;
-            border: 1px solid #ccc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .google-btn img {
-            width: 20px;
-            margin-right: 10px;
-        }
-        .switch {
-            margin-top: 15px;
-        }
-        .switch a {
-            color: #007bff;
-            text-decoration: none;
-        }
     </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="brand">TimeSync</div>
-        <!--<div class="nav-links">
-            <a href="signin_login.html">Login</a>
-            <a href="signin_login.html">Sign Up</a>-->
-        </div>
     </nav>
     <div class="container" id="auth-container">
         <h2 id="form-title">Login</h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         <button class="btn login-btn" id="auth-btn">Login</button>
-        <button class="btn google-btn">
-            <img src="https://img.icons8.com/color/48/000000/google-logo.png"/> Sign in with Google
-        </button>
         <p class="switch">Don't have an account? <a href="#" id="toggle-form">Sign Up</a></p>
+        <p id="message"></p>
     </div>
     <script>
         const toggleForm = document.getElementById('toggle-form');
         const formTitle = document.getElementById('form-title');
         const authBtn = document.getElementById('auth-btn');
-        const switchText = document.querySelector('.switch');
-
+        const message = document.getElementById('message');
+        let isLogin = true;
 
         toggleForm.addEventListener('click', function(event) {
             event.preventDefault();
-            if (formTitle.innerText === 'Login') {
-                formTitle.innerText = 'Sign Up';
-                authBtn.innerText = 'Sign Up';
-                authBtn.classList.remove('login-btn');
-                authBtn.classList.add('signup-btn');
-                switchText.innerHTML = 'Already have an account? <a href="#" id="toggle-form">Login</a>';
-            } else {
+            isLogin = !isLogin;
+            if (isLogin) {
                 formTitle.innerText = 'Login';
                 authBtn.innerText = 'Login';
                 authBtn.classList.remove('signup-btn');
                 authBtn.classList.add('login-btn');
-                switchText.innerHTML = "Don't have an account? <a href='#' id='toggle-form'>Sign Up</a>";
+                toggleForm.innerHTML = "Don't have an account? <a href='#'>Sign Up</a>";
+            } else {
+                formTitle.innerText = 'Sign Up';
+                authBtn.innerText = 'Sign Up';
+                authBtn.classList.remove('login-btn');
+                authBtn.classList.add('signup-btn');
+                toggleForm.innerHTML = "Already have an account? <a href='#'>Login</a>";
+            }
+        });
+
+        authBtn.addEventListener('click', async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                message.innerText = 'Please enter email and password';
+                return;
+            }
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const result = await response.json();
+            message.innerText = result.message;
+
+            if (response.ok) {
+                setTimeout(() => {
+                    window.location.href = '/dashboard'; // Redirect to dashboard on success
+                }, 1000);
             }
         });
     </script>
