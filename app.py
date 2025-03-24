@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template
-from firebase_admin import auth, credentials, initialize_app
+#from firebase_admin import auth, credentials, initialize_app
 from pymongo import MongoClient
 from flask_cors import CORS
 import os
@@ -8,10 +8,6 @@ from datetime import datetime, timedelta
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend-backend communication
-
-# Firebase configuration (commented out for now)
-# cred = credentials.Certificate("path/to/firebase-admin-sdk.json")
-# initialize_app(cred)
 
 # MongoDB Atlas configuration
 mongo_uri = os.getenv("MONGO_URI")
@@ -44,67 +40,76 @@ def generate_calendar():
 def insights():
     return render_template("insights.html")
 
-# Helper function to verify Firebase ID token
-def verify_token(id_token):
-    try:
-        decoded_token = auth.verify_id_token(id_token)
-        return decoded_token
-    except Exception as e:
-        return None
+def priority_value(priority):
+    """Convert priority string to integer value (higher value = higher priority)."""
+    priority_mapping = {"High": 3, "Medium": 2, "Low": 1, "None": 0}
+    return priority_mapping.get(priority, 0)
 
-# New route to generate timetable
 @app.route("/generate-timetable", methods=["POST"])
 def generate_timetable():
-    data = request.get_json()
-    
-    # Extract user input
-    start_time = datetime.strptime(data.get("start_time"), "%H:%M")
-    end_time = datetime.strptime(data.get("end_time"), "%H:%M")
-    tasks = data.get("tasks")  # List of tasks [{task, priority, duration}]
-    break_interval = int(data.get("break_interval", 60))  # Default: 1 hour
-    break_duration = int(data.get("break_duration", 5))  # Default: 5 minutes
-    
-    # Sort tasks by priority (Higher first) and FCFS (First Come First Serve)
-    tasks.sort(key=lambda x: (-get_priority_value(x["priority"]), x["timestamp"]))
+    data = request.json
 
-    schedule = []
+    start_time = datetime.strptime(data["start_time"], "%H:%M")
+    end_time = datetime.strptime(data["end_time"], "%H:%M")
+    break_interval = data["break_interval"]  # Minutes (e.g., 60)
+    break_duration = data["break_duration"]  # Minutes (e.g., 5)
+    tasks = sorted(data["tasks"], key=lambda x: (-priority_value(x["priority"]), x["timestamp"]))
+
     current_time = start_time
+    schedule = []
+    work_time = 0  # Track uninterrupted work time
 
-    while tasks and current_time < end_time:
+    while current_time < end_time and tasks:
         task = tasks.pop(0)
-        duration = int(task["duration"])  # Convert duration to int
+        task_name = task["task"]
+        task_priority = task["priority"]
+        task_duration = int(task["duration"])
 
-        if current_time + timedelta(minutes=duration) <= end_time:
-            schedule.append({
-                "time": f"{current_time.strftime('%H:%M')} - {(current_time + timedelta(minutes=duration)).strftime('%H:%M')}",
-                "task": task["task"],
-                "priority": task["priority"],
-                "duration": f"{duration}m",
-                "status": "Pending"
-            })
-            current_time += timedelta(minutes=duration)
+        while task_duration > 0 and current_time < end_time:
+            time_until_break = break_interval - work_time
 
-            # Add a break if needed
-            if (current_time - start_time).seconds / 60 % break_interval == 0:
+            if task_duration > time_until_break:
+                # Split the task if it exceeds the break interval
+                schedule.append({
+                    "time": f"{current_time.strftime('%H:%M')} - {(current_time + timedelta(minutes=time_until_break)).strftime('%H:%M')}",
+                    "task": task_name,
+                    "priority": task_priority,
+                    "duration": f"{time_until_break}m",
+                    #"status": "Pending"
+                })
+                current_time += timedelta(minutes=time_until_break)
+                task_duration -= time_until_break
+                work_time = break_interval  # Force a break after this split
+            else:
+                # Task fits within the available time
+                schedule.append({
+                    "time": f"{current_time.strftime('%H:%M')} - {(current_time + timedelta(minutes=task_duration)).strftime('%H:%M')}",
+                    "task": task_name,
+                    "priority": task_priority,
+                    "duration": f"{task_duration}m",
+                    #"status": "Pending"
+                })
+                current_time += timedelta(minutes=task_duration)
+                work_time += task_duration
+                task_duration = 0  # Task is completed
+
+            # Insert a break immediately after reaching break interval
+            if work_time >= break_interval:
                 if current_time + timedelta(minutes=break_duration) <= end_time:
                     schedule.append({
                         "time": f"{current_time.strftime('%H:%M')} - {(current_time + timedelta(minutes=break_duration)).strftime('%H:%M')}",
                         "task": "Break",
                         "priority": "-",
                         "duration": f"{break_duration}m",
-                        "status": "Pending"
+                        #"status": "Pending"
                     })
                     current_time += timedelta(minutes=break_duration)
+                    work_time = 0  # Reset work time counter
 
-    # Store the generated schedule in MongoDB
+    # Store schedule in MongoDB
     schedules_collection.insert_one({"schedule": schedule})
 
-    return jsonify(schedule), 201
-
-# Helper function to assign priority value
-def get_priority_value(priority):
-    priority_map = {"High": 3, "Medium": 2, "Low": 1}
-    return priority_map.get(priority, 0)
+    return jsonify(schedule)
 
 # Run the app
 if __name__ == "__main__":

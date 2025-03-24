@@ -150,7 +150,7 @@
 
 
             <button class="add-btn" onclick="addTask()">Add Tasks</button>
-            <button class="add-btn" onclick="addTask()">Generate Timetable</button>
+            <button class="add-btn" onclick="generateTimetable()">Generate Timetable</button>
         </div>
 
 
@@ -164,11 +164,11 @@
                         <th>Task</th>
                         <th>Priority</th>
                         <th>Duration</th>
-                        <th>Status</th>
+                        <!--<th>Status</th>-->
                     </tr>
                 </thead>
                 <tbody id="scheduleBody">
-                    <tr>
+                    <!--<tr>
                         <td>09:00 - 10:00</td>
                         <td>Study DSA</td>
                         <td class="high-priority">High</td>
@@ -181,7 +181,7 @@
                         <td>-</td>
                         <td>10m</td>
                         <td class="pending">Pending</td>
-                    </tr>
+                    </tr>-->
                 </tbody>
             </table>
         </div>
@@ -209,7 +209,6 @@
                     <td>${taskName}</td>
                     <td class="${priorityClass}">${priority}</td>
                     <td>${duration}</td>
-                    <td class="pending">Pending</td>
                 </tr>
             `;
 
@@ -218,8 +217,96 @@
             document.getElementById("taskInput").value = "";
             document.getElementById("duration").value = "";
         }
-    </script>
 
+        function generateTimetable() {
+            let startTime = document.getElementById("startTime").value;
+            let endTime = document.getElementById("endTime").value;
+            let breakPref = document.getElementById("breakPref").value;
+            let breakDuration = document.getElementById("breakDuration").value;
+            
+            // Convert break preference and duration to minutes
+            let breakInterval = parseInt(breakPref.split(" ")[1]) * 60;
+            let breakDurationValue = parseInt(breakDuration.split(" ")[0]);
+        
+            // Collect tasks from the table, including breaks
+            let tasks = [];
+            let taskRows = document.querySelectorAll("#scheduleBody tr");
+            let timestamp = 1;  // To maintain FCFS order
+        
+            /*taskRows.forEach(row => {
+                let task = row.cells[1].innerText;
+                let priority = row.cells[2].innerText === "-" ? "None" : row.cells[2].innerText; // Assign 'None' for breaks
+                let duration = parseInt(row.cells[3].innerText.replace("m", "").replace("h", "")) || 0;
+        
+                tasks.push({
+                    "task": task,
+                    "priority": priority,
+                    "duration": duration,
+                    "timestamp": timestamp++
+                });
+            });*/
+
+            taskRows.forEach(row => {
+                let task = row.cells[1].innerText;
+                let priority = row.cells[2].innerText === "-" ? "None" : row.cells[2].innerText;
+                let durationText = row.cells[3].innerText;
+            
+                // Convert "1h 30m" -> total minutes
+                let duration = 0;
+                let hoursMatch = durationText.match(/(\d+)h/);
+                let minutesMatch = durationText.match(/(\d+)m/);
+            
+                if (hoursMatch) duration += parseInt(hoursMatch[1]) * 60;
+                if (minutesMatch) duration += parseInt(minutesMatch[1]);
+            
+                tasks.push({
+                    "task": task,
+                    "priority": priority,
+                    "duration": duration,
+                    "timestamp": timestamp++
+                });
+            });
+            
+        
+            // Prepare request data
+            let requestData = {
+                "start_time": startTime,
+                "end_time": endTime,
+                "tasks": tasks,
+                "break_interval": breakInterval,
+                "break_duration": breakDurationValue
+            };
+        
+            // Send POST request to Flask backend
+            fetch("http://127.0.0.1:5000/generate-timetable", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                let scheduleBody = document.getElementById("scheduleBody");
+                scheduleBody.innerHTML = ""; // Clear existing schedule
+                
+                data.forEach(entry => {
+                    let priorityClass = entry.priority === "High" ? "high-priority" : (entry.priority === "None" ? "" : "");
+                    let newRow = `
+                        <tr>
+                            <td>${entry.time}</td>
+                            <td>${entry.task}</td>
+                            <td class="${priorityClass}">${entry.priority === "None" ? "-" : entry.priority}</td>
+                            <td>${entry.duration}</td>
+                        </tr>
+                    `;
+                    scheduleBody.innerHTML += newRow;
+                });
+            })
+            .catch(error => console.error("Error:", error));
+        }
+        
+    </script>
 
 </body>
 </html>
