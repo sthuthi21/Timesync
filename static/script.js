@@ -46,7 +46,7 @@ function updateCalendar() {
     });
 }
 
-async function login() {
+/*async function login() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
     const response = await fetch("/login", {
@@ -61,7 +61,7 @@ async function login() {
     } else {
         alert(data.error);
     }
-}
+}*/
 
 prevBtn.addEventListener("click", () => {
     currentMonth--;
@@ -112,7 +112,7 @@ function updateSchedule(selectedDay) {
     document.querySelector(".schedule h2").textContent = `${monthNames[currentMonth]} ${selectedDay}, ${currentYear}`;
 }
 
-login();
+//login();
 updateCalendar();
 
 

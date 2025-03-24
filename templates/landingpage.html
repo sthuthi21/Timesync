@@ -108,17 +108,16 @@
     <nav class="navbar">
         <div class="brand">TimeSync</div>
         <div class="auth-buttons">
-            <a href="#" class="login">Login</a>
-            <a href="#" class="signup">Sign Up</a>
+            <a href="{{ url_for('login') }}" class="login">Login</a>
+            <a href="{{ url_for('login') }}" class="signup">Sign Up</a>
         </div>
     </nav>
-
 
     <!-- Hero Section -->
     <header class="hero">
         <h1>Plan Your Day with Ease!</h1>
         <p>An AI-powered scheduler that organizes your daily tasks based on your energy levels.</p>
-        <button onclick="location.href='calendar.html'">Get Started</button>
+        <button onclick="window.location.href='{{ url_for('login') }}'">Get Started</button>
     </header>
 
 
@@ -171,10 +170,10 @@
 
 
     <!-- Call to Action -->
-    <section class="cta">
+    <!--<section class="cta">
         <h2>Start Scheduling Now</h2>
         <button onclick="location.href='calendar.html'">Try It Now</button>
-    </section>
+    </section>-->
 
 
     <!-- Footer -->
