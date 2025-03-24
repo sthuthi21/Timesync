@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,7 +21,7 @@
             position: fixed;
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Push logout button to bottom */
+            justify-content: space-between;
         }
         .sidebar h2 {
             text-align: center;
@@ -43,7 +43,7 @@
             background: rgba(255, 255, 255, 0.4);
         }
         .logout-container {
-            text-align: center; /* Center align the button */
+            text-align: center;
             padding-bottom: 20px;
         }
         .logout-btn {
@@ -79,9 +79,9 @@
         <div>
             <h2>Dashboard</h2>
             <ul>
-                <li onclick="loadPage('calendar.html')">Calendar</li>
-                <li onclick="loadPage('generate_calendar.html')">Generate Calendar</li>
-                <li onclick="loadPage('insights.html')">Insights</li>
+                <li onclick="loadPage('{{ url_for('calendar') }}')">Calendar</li>
+                <li onclick="loadPage('{{ url_for('generate_calendar') }}')">Generate Calendar</li>
+                <li onclick="loadPage('{{ url_for('insights') }}')">Insights</li>
             </ul>
         </div>
         <div class="logout-container">
@@ -89,22 +89,18 @@
         </div>
     </div>
     <div class="main-content">
-        <iframe id="content-frame" src="calendar.html"></iframe>
+        <iframe id="content-frame" src="{{ url_for('calendar') }}"></iframe>
     </div>
-
 
     <script>
         function loadPage(page) {
             document.getElementById('content-frame').src = page;
         }
 
-
         function logout() {
             alert("Logging out...");
-            window.location.href = "login.html"; // Redirect to login page
+            window.location.href = "{{ url_for('login') }}";
         }
     </script>
 </body>
 </html>
-
-

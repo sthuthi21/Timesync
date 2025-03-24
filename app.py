@@ -32,6 +32,18 @@ def login():
 def dashboard():
     return render_template("dashboard.html")
 
+@app.route("/calendar")
+def calendar():
+    return render_template("calendar.html")
+
+@app.route("/generate-calendar")
+def generate_calendar():
+    return render_template("generate_calendar.html")
+
+@app.route("/insights")
+def insights():
+    return render_template("insights.html")
+
 # Helper function to verify Firebase ID token
 def verify_token(id_token):
     try:
