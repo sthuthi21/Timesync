@@ -46,6 +46,22 @@ function updateCalendar() {
     });
 }
 
+async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const response = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+    if (response.ok) {
+        localStorage.setItem("token", data.token);  // Store token for future requests
+        window.location.href = "dashboard.html";
+    } else {
+        alert(data.error);
+    }
+}
 
 prevBtn.addEventListener("click", () => {
     currentMonth--;
@@ -66,12 +82,37 @@ nextBtn.addEventListener("click", () => {
     updateCalendar();
 });
 
+document.getElementById("generate-btn").addEventListener("click", async () => {
+    const startTime = document.querySelector("#start-time").value;
+    const endTime = document.querySelector("#end-time").value;
+    const breakInterval = document.querySelector("#break-interval").value;
+    const breakDuration = document.querySelector("#break-duration").value;
+    
+    // Get tasks
+    const tasks = []; // Populate with user-entered tasks
+
+    const response = await fetch("http://localhost:5000/generate-timetable", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            start_time: startTime,
+            end_time: endTime,
+            tasks: tasks,
+            break_interval: breakInterval,
+            break_duration: breakDuration
+        }),
+    });
+
+    const schedule = await response.json();
+    console.log(schedule); // Update UI with the generated schedule
+});
+
 
 function updateSchedule(selectedDay) {
     document.querySelector(".schedule h2").textContent = `${monthNames[currentMonth]} ${selectedDay}, ${currentYear}`;
 }
 
-
+login();
 updateCalendar();
 
 
