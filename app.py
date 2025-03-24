@@ -1,12 +1,14 @@
-from flask import Flask, request, jsonify, render_template
-from firebase_admin import auth, credentials, initialize_app
+from flask import Flask, request, jsonify, render_template , session
+#from firebase_admin import auth, credentials, initialize_app
 from pymongo import MongoClient
 from flask_cors import CORS
 import os
+import bcrypt
 from datetime import datetime, timedelta
 
 # Initialize Flask app
 app = Flask(__name__)
+app.secret_key = "testing"
 CORS(app)  # Enable CORS for frontend-backend communication
 
 # Firebase configuration (commented out for now)
@@ -24,9 +26,29 @@ schedules_collection = db.schedules  # Collection for generated schedules
 def home():
     return render_template("landingpage.html")
 
-@app.route("/login")
+@app.route("/login" , methods = ["POST", "GET"])
 def login():
-    return render_template("login.html")
+    if request.method == "GET":
+        return render_template("login.html")
+    data = request.json
+    email = data.get("email")
+    password = data.get("password")
+
+    user = users_collection.find_one({"email": email})
+    if user:
+        if bcrypt.checkpw(password.encode("utf-8"), user["password"]):
+            session["user"] = email  # Store user session
+            return jsonify({"message": "Login successful"}), 200
+        else:
+            return jsonify({"message": "Invalid password"}), 401
+    else:
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        users_collection.insert_one({
+            "email": email,
+            "password": hashed_password
+        })
+        return jsonify({"message": "user created"})
+    
 
 @app.route("/dashboard")
 def dashboard():
