@@ -70,7 +70,7 @@ def priority_value(priority):
 @app.route("/generate-timetable", methods=["POST"])
 def generate_timetable():
     data = request.json
-
+    date = data.get("date")
     start_time = datetime.strptime(data["start_time"], "%H:%M")
     end_time = datetime.strptime(data["end_time"], "%H:%M")
     break_interval = data["break_interval"]  # Minutes (e.g., 60)
@@ -127,9 +127,13 @@ def generate_timetable():
                     })
                     current_time += timedelta(minutes=break_duration)
                     work_time = 0  # Reset work time counter
-
+    print(f"(Date: {date})")
     # Store schedule in MongoDB
-    schedules_collection.insert_one({"schedule": schedule})
+    schedules_collection.insert_one({
+        "user": session["user"],
+        "date": date,
+        "schedule": schedule
+    })
 
     return jsonify(schedule)
 

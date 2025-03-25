@@ -83,6 +83,7 @@ nextBtn.addEventListener("click", () => {
 });
 
 document.getElementById("generate-btn").addEventListener("click", async () => {
+    const today = new Date(Date.now()).toISOString().split('T')[0];
     const startTime = document.querySelector("#start-time").value;
     const endTime = document.querySelector("#end-time").value;
     const breakInterval = document.querySelector("#break-interval").value;
@@ -90,11 +91,12 @@ document.getElementById("generate-btn").addEventListener("click", async () => {
     
     // Get tasks
     const tasks = []; // Populate with user-entered tasks
-
+    console.log(today)
     const response = await fetch("http://localhost:5000/generate-timetable", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+            date: today,
             start_time: startTime,
             end_time: endTime,
             tasks: tasks,

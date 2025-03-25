@@ -219,6 +219,7 @@
         }
 
         function generateTimetable() {
+            const today = new Date(Date.now()).toISOString().split('T')[0];
             let startTime = document.getElementById("startTime").value;
             let endTime = document.getElementById("endTime").value;
             let breakPref = document.getElementById("breakPref").value;
@@ -270,6 +271,7 @@
         
             // Prepare request data
             let requestData = {
+                "date": today,
                 "start_time": startTime,
                 "end_time": endTime,
                 "tasks": tasks,
