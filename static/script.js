@@ -58,9 +58,32 @@ document.addEventListener("DOMContentLoaded", () => {
         updateCalendar();
     });
 
-    function updateSchedule(selectedDay) {
-        document.querySelector(".schedule h2").textContent = `${monthNames[currentMonth]} ${selectedDay}, ${currentYear}`;
+    async function updateSchedule(selectedDay) {
+        const formattedDate = `${currentYear}-${(currentMonth + 1).toString().padStart(2, "0")}-${selectedDay.toString().padStart(2, "0")}`;
+        scheduleTitle.textContent = `${monthNames[currentMonth]} ${selectedDay}, ${currentYear}`;
+    
+        try {
+            const response = await fetch(`/get-schedule?date=${formattedDate}`);
+            const schedule = await response.json();
+    
+            console.log("Fetched schedule:", schedule);  // Debugging: Check API response in console
+    
+            // Ensure schedule is an array and not empty
+            if (!Array.isArray(schedule) || schedule.length === 0) {
+                eventsList.innerHTML = "<p>No events scheduled.</p>";
+                return;
+            }
+    
+            // Map each event correctly
+            eventsList.innerHTML = schedule.map(event => 
+                `<div class="event">${event.task || "No Task"} <span>${event.time || "No Time"}</span></div>`
+            ).join("");
+        } catch (error) {
+            console.error("Error fetching schedule:", error);
+            eventsList.innerHTML = "<p>Error loading schedule.</p>";
+        }
     }
+    
 
     // **Ensure the calendar is generated as soon as the page loads**
     updateCalendar();

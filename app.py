@@ -136,6 +136,21 @@ def generate_timetable():
 
     return jsonify(schedule)
 
+@app.route("/get-schedule", methods=["GET"])
+def get_schedule():
+    date = request.args.get("date")
+    if not date:
+        return jsonify([])  # Return empty if no date is provided
+
+    # Find the document matching the date
+    schedule_doc = schedules_collection.find_one({"date": date}, {"_id": 0, "schedule": 1})
+
+    # If no schedule found, return empty list
+    if not schedule_doc or "schedule" not in schedule_doc:
+        return jsonify([])
+
+    return jsonify(schedule_doc["schedule"])  # Return only the nested schedule array
+
 # Run the app
 if __name__ == "__main__":
     app.run(debug=True)
