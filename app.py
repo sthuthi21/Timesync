@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template , session
-##from firebase_admin import auth, credentials, initialize_app
+#from firebase_admin import auth, credentials, initialize_app
 from pymongo import MongoClient
 from flask_cors import CORS
 import os
@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = "testing"
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 CORS(app)  # Enable CORS for frontend-backend communication
 
 # MongoDB Atlas configuration
@@ -22,10 +22,11 @@ schedules_collection = db.schedules  # Collection for generated schedules
 def home():
     return render_template("landingpage.html")
 
-@app.route("/login" , methods = ["POST", "GET"])
+@app.route("/login" , methods=["POST", "GET"])
 def login():
     if request.method == "GET":
         return render_template("login.html")
+    
     data = request.json
     email = data.get("email")
     password = data.get("password")
@@ -33,6 +34,7 @@ def login():
     user = users_collection.find_one({"email": email})
     if user:
         if bcrypt.checkpw(password.encode("utf-8"), user["password"]):
+            session.permanent = True  # Ensures session persists
             session["user"] = email  # Store user session
             return jsonify({"message": "Login successful"}), 200
         else:
@@ -43,8 +45,8 @@ def login():
             "email": email,
             "password": hashed_password
         })
-        return jsonify({"message": "user created"})
-    
+        return jsonify({"message": "User created"})
+
 
 @app.route("/dashboard")
 def dashboard():
@@ -69,6 +71,9 @@ def priority_value(priority):
 
 @app.route("/generate-timetable", methods=["POST"])
 def generate_timetable():
+    if "user" not in session:
+        return jsonify({"error": "User session not found. Please log in."}), 401  # Unauthorized
+
     data = request.json
     date = data.get("date")
     start_time = datetime.strptime(data["start_time"], "%H:%M")
@@ -91,31 +96,26 @@ def generate_timetable():
             time_until_break = break_interval - work_time
 
             if task_duration > time_until_break:
-                # Split the task if it exceeds the break interval
                 schedule.append({
                     "time": f"{current_time.strftime('%H:%M')} - {(current_time + timedelta(minutes=time_until_break)).strftime('%H:%M')}",
                     "task": task_name,
                     "priority": task_priority,
                     "duration": f"{time_until_break}m",
-                    #"status": "Pending"
                 })
                 current_time += timedelta(minutes=time_until_break)
                 task_duration -= time_until_break
                 work_time = break_interval  # Force a break after this split
             else:
-                # Task fits within the available time
                 schedule.append({
                     "time": f"{current_time.strftime('%H:%M')} - {(current_time + timedelta(minutes=task_duration)).strftime('%H:%M')}",
                     "task": task_name,
                     "priority": task_priority,
                     "duration": f"{task_duration}m",
-                    #"status": "Pending"
                 })
                 current_time += timedelta(minutes=task_duration)
                 work_time += task_duration
-                task_duration = 0  # Task is completed
+                task_duration = 0  
 
-            # Insert a break immediately after reaching break interval
             if work_time >= break_interval:
                 if current_time + timedelta(minutes=break_duration) <= end_time:
                     schedule.append({
@@ -123,11 +123,10 @@ def generate_timetable():
                         "task": "Break",
                         "priority": "-",
                         "duration": f"{break_duration}m",
-                        #"status": "Pending"
                     })
                     current_time += timedelta(minutes=break_duration)
                     work_time = 0  # Reset work time counter
-    print(f"(Date: {date})")
+    
     # Store schedule in MongoDB
     schedules_collection.insert_one({
         "user": session["user"],
