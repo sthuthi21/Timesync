@@ -1,7 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    let currentMonth = 2; // March (Index 2)
-    let currentYear = 2025;
+    const today = new Date();
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth();
+    const currentDay = today.getDate();
 
     const calendarTitle = document.querySelector(".calendar h2");
     const calendarTable = document.querySelector("#calendarTable");
@@ -87,4 +89,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // **Ensure the calendar is generated as soon as the page loads**
     updateCalendar();
+    updateSchedule(currentDay);
 });
