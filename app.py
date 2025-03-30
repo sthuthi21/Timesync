@@ -47,21 +47,34 @@ def login():
         })
         return jsonify({"message": "User created"})
 
+@app.route("/logout")
+def logout():
+    session.pop("user", None)  # Remove user session
+    return jsonify({"message": "Logged out successfully"}), 200
+
 
 @app.route("/dashboard")
 def dashboard():
-    return render_template("dashboard.html")
+    if "user" not in session:
+        return render_template("login.html")
+    return render_template("dashboard.html", user = session["user"])
 
 @app.route("/calendar")
 def calendar():
+    if "user" not in session:
+        return render_template("login.html")
     return render_template("calendar.html")
 
 @app.route("/generate-calendar")
 def generate_calendar():
+    if "user" not in session:
+        return render_template("login.html")
     return render_template("generate_calendar.html")
 
 @app.route("/insights")
 def insights():
+    if "user" not in session:
+        return render_template("login.html")
     return render_template("insights.html")
 
 def priority_value(priority):
