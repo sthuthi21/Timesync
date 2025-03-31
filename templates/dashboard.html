@@ -77,6 +77,7 @@
 <body>
     <div class="sidebar">
         <div>
+            <h2>Welcome, {{ user }}</h2>
             <h2>Dashboard</h2>
             <ul>
                 <li onclick="loadPage('{{ url_for('calendar') }}')">Calendar</li>
@@ -96,10 +97,16 @@
         function loadPage(page) {
             document.getElementById('content-frame').src = page;
         }
-
         function logout() {
-            alert("Logging out...");
-            window.location.href = "{{ url_for('login') }}";
+            fetch("{{ url_for('logout') }}", { method: "GET" })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = "{{ url_for('login') }}";  // Redirect to login page
+                    } else {
+                        alert("Logout failed. Please try again.");
+                    }
+                })
+                .catch(error => console.error("Error during logout:", error));
         }
     </script>
 </body>

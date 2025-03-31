@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, render_template , session
-#from firebase_admin import auth, credentials, initialize_app
 from pymongo import MongoClient
 from flask_cors import CORS
 import os
@@ -48,21 +47,34 @@ def login():
         })
         return jsonify({"message": "User created"})
 
+@app.route("/logout")
+def logout():
+    session.pop("user", None)  # Remove user session
+    return jsonify({"message": "Logged out successfully"}), 200
+
 
 @app.route("/dashboard")
 def dashboard():
-    return render_template("dashboard.html")
+    if "user" not in session:
+        return render_template("login.html")
+    return render_template("dashboard.html", user = session["user"])
 
 @app.route("/calendar")
 def calendar():
+    if "user" not in session:
+        return render_template("login.html")
     return render_template("calendar.html")
 
 @app.route("/generate-calendar")
 def generate_calendar():
+    if "user" not in session:
+        return render_template("login.html")
     return render_template("generate_calendar.html")
 
 @app.route("/insights")
 def insights():
+    if "user" not in session:
+        return render_template("login.html")
     return render_template("insights.html")
 
 def priority_value(priority):
@@ -137,105 +149,75 @@ def generate_timetable():
 
     return jsonify(schedule)
 
-# @app.route("/get-schedule", methods=["GET"])
-# def get_schedule():
-#     date = request.args.get("date")
-#     if not date:
-#         return jsonify([])  # Return empty if no date is provided
-
-#     # Find the document matching the date
-#     schedule_doc = schedules_collection.find_one({"date": date}, {"_id": 0, "schedule": 1})
-
-#     # If no schedule found, return empty list
-#     if not schedule_doc or "schedule" not in schedule_doc:
-#         return jsonify([])
-
-#     return jsonify(schedule_doc["schedule"])  # Return only the nested schedule array
-
-# @app.route("/get-schedule", methods=["GET"])
-# def get_schedule():
-#     date = request.args.get("date")
-#     if not date:
-#         print("No date provided")
-#         return jsonify([])  # Return empty if no date is provided
-
-#     print(f"Fetching schedule for user: {session.get('user')}, date: {date}")
-
-#     schedule_doc = schedules_collection.find_one(
-#         {"user": session.get("user"), "date": date},
-#         {"_id": 0, "schedule": 1}
-#     )
-
-#     if not schedule_doc or "schedule" not in schedule_doc:
-#         print("No schedule found")
-#         return jsonify([])
-
-#     print("Schedule found:", schedule_doc["schedule"])
-#     return jsonify(schedule_doc["schedule"])
-
 @app.route("/get-schedule", methods=["GET"])
 def get_schedule():
-    if "user" not in session:
-        return jsonify({"error": "User session not found. Please log in."}), 401
-    
-    print(f"Session User: {session.get('user')}")
-
     date = request.args.get("date")
     if not date:
-        return jsonify([])  # Return empty if no date is provided
-
-    print(f"Fetching schedule for user: {session['user']}, date: {date}")
-
-    schedule_doc = schedules_collection.find_one(
-        {"user": session["user"], "date": date},
-        {"_id": 0, "schedule": 1}
-    )
-
-    if not schedule_doc or "schedule" not in schedule_doc:
-        print("No schedule found")
         return jsonify([])
 
-    print("Schedule found:", schedule_doc["schedule"])
-    return jsonify(schedule_doc["schedule"])
+    schedule_doc = schedules_collection.find_one({"date": date})
 
+    if not schedule_doc:
+        return jsonify([])
 
-@app.route("/track-progress", methods=["POST"])
-def track_progress():
+    updated_schedule = []
+    current_time = datetime.now().strftime("%H:%M")
+
+    for task in schedule_doc["schedule"]:
+        # If the task is not a "Break" and still pending, mark it as "skipped"
+        if task["task"] != "Break" and task.get("status", "pending") == "pending":
+            task["status"] = "skipped"
+            task["time_spent"] = 0
+        updated_schedule.append(task)
+
+    # Update the database
+    schedules_collection.update_one(
+        {"date": date}, 
+        {"$set": {"schedule": updated_schedule}}
+    )
+
+    return jsonify(updated_schedule)
+
+@app.route("/update-task-status", methods=["POST"])
+def update_task_status():
     if "user" not in session:
-        return jsonify({"error": "User session not found. Please log in."}), 401
+        return jsonify({"error": "User not logged in"}), 401
 
     data = request.json
     date = data.get("date")
-    task_id = data.get("task_id")
-    action = data.get("action")  # Either "start" or "stop"
+    task_name = data.get("task")
+    action = data.get("action")  # "start" or "stop"
 
-    # Find the schedule for the user
+    # Find user's schedule for the given date
     schedule_doc = schedules_collection.find_one({"user": session["user"], "date": date})
 
     if not schedule_doc:
-        return jsonify({"error": "Schedule not found."}), 404
+        return jsonify({"error": "No schedule found"}), 404
 
-    # Update the correct task within the schedule
-    for task in schedule_doc["schedule"]:
-        if task["_id"] == task_id:
+    schedule = schedule_doc.get("schedule", [])
+
+    for task in schedule:
+        if task["task"] == "Break":
+            continue
+        if task["task"] == task_name:
             if action == "start":
-                task["start_time"] = datetime.utcnow()
+                task["status"] = "in-progress"
+                task["start_time"] = datetime.now().isoformat()
             elif action == "stop":
-                if "start_time" not in task:
-                    return jsonify({"error": "Start time not recorded."}), 400
+                task["status"] = "completed"
+                start_time = datetime.fromisoformat(task.get("start_time", datetime.now().isoformat()))
+                task["time_spent"] = (datetime.now() - start_time).seconds // 60  # Time in minutes
+            else:
+                task["status"] = "skipped"
+                task["time_spent"] = 0
 
-                task["end_time"] = datetime.utcnow()
-                task["time_taken"] = (task["end_time"] - task["start_time"]).total_seconds()  # Store time taken in seconds
-
-            break
-
-    # Update the document in MongoDB
+    # Update the database
     schedules_collection.update_one(
         {"user": session["user"], "date": date},
-        {"$set": {"schedule": schedule_doc["schedule"]}}
+        {"$set": {"schedule": schedule}}
     )
 
-    return jsonify({"message": f"Task {action} time recorded."})
+    return jsonify({"message": "Task status updated successfully"})
 
 # Run the app
 if __name__ == "__main__":
