@@ -5,6 +5,7 @@ from flask_cors import CORS
 import os
 import bcrypt
 from datetime import datetime, timedelta
+from bson import ObjectId  # Import this at the top
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -136,20 +137,105 @@ def generate_timetable():
 
     return jsonify(schedule)
 
+# @app.route("/get-schedule", methods=["GET"])
+# def get_schedule():
+#     date = request.args.get("date")
+#     if not date:
+#         return jsonify([])  # Return empty if no date is provided
+
+#     # Find the document matching the date
+#     schedule_doc = schedules_collection.find_one({"date": date}, {"_id": 0, "schedule": 1})
+
+#     # If no schedule found, return empty list
+#     if not schedule_doc or "schedule" not in schedule_doc:
+#         return jsonify([])
+
+#     return jsonify(schedule_doc["schedule"])  # Return only the nested schedule array
+
+# @app.route("/get-schedule", methods=["GET"])
+# def get_schedule():
+#     date = request.args.get("date")
+#     if not date:
+#         print("No date provided")
+#         return jsonify([])  # Return empty if no date is provided
+
+#     print(f"Fetching schedule for user: {session.get('user')}, date: {date}")
+
+#     schedule_doc = schedules_collection.find_one(
+#         {"user": session.get("user"), "date": date},
+#         {"_id": 0, "schedule": 1}
+#     )
+
+#     if not schedule_doc or "schedule" not in schedule_doc:
+#         print("No schedule found")
+#         return jsonify([])
+
+#     print("Schedule found:", schedule_doc["schedule"])
+#     return jsonify(schedule_doc["schedule"])
+
 @app.route("/get-schedule", methods=["GET"])
 def get_schedule():
+    if "user" not in session:
+        return jsonify({"error": "User session not found. Please log in."}), 401
+    
+    print(f"Session User: {session.get('user')}")
+
     date = request.args.get("date")
     if not date:
         return jsonify([])  # Return empty if no date is provided
 
-    # Find the document matching the date
-    schedule_doc = schedules_collection.find_one({"date": date}, {"_id": 0, "schedule": 1})
+    print(f"Fetching schedule for user: {session['user']}, date: {date}")
 
-    # If no schedule found, return empty list
+    schedule_doc = schedules_collection.find_one(
+        {"user": session["user"], "date": date},
+        {"_id": 0, "schedule": 1}
+    )
+
     if not schedule_doc or "schedule" not in schedule_doc:
+        print("No schedule found")
         return jsonify([])
 
-    return jsonify(schedule_doc["schedule"])  # Return only the nested schedule array
+    print("Schedule found:", schedule_doc["schedule"])
+    return jsonify(schedule_doc["schedule"])
+
+
+@app.route("/track-progress", methods=["POST"])
+def track_progress():
+    if "user" not in session:
+        return jsonify({"error": "User session not found. Please log in."}), 401
+
+    data = request.json
+    date = data.get("date")
+    task_id = data.get("task_id")
+    action = data.get("action")  # Either "start" or "stop"
+
+    # Find the schedule for the user
+    schedule_doc = schedules_collection.find_one({"user": session["user"], "date": date})
+
+    if not schedule_doc:
+        return jsonify({"error": "Schedule not found."}), 404
+
+    # Update the correct task within the schedule
+    for task in schedule_doc["schedule"]:
+        if task["_id"] == task_id:
+            if action == "start":
+                task["start_time"] = datetime.utcnow()
+            elif action == "stop":
+                if "start_time" not in task:
+                    return jsonify({"error": "Start time not recorded."}), 400
+
+                task["end_time"] = datetime.utcnow()
+                task["time_taken"] = (task["end_time"] - task["start_time"]).total_seconds()  # Store time taken in seconds
+
+            break
+
+    # Update the document in MongoDB
+    schedules_collection.update_one(
+        {"user": session["user"], "date": date},
+        {"$set": {"schedule": schedule_doc["schedule"]}}
+    )
+
+    return jsonify({"message": f"Task {action} time recorded."})
 
 # Run the app
 if __name__ == "__main__":
