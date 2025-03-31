@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Sign Up</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         body {
@@ -31,7 +31,7 @@
         h2 {
             color: #007bff;
         }
-        input {
+        input, select {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -46,8 +46,8 @@
             font-size: 16px;
             cursor: pointer;
         }
-        .login-btn {
-            background: #007bff;
+        .signup-btn {
+            background: #28A745;
             color: white;
         }
     </style>
@@ -57,27 +57,45 @@
         <div class="brand">TimeSync</div>
     </nav>
     <div class="container">
-        <h2>Login</h2>
+        <h2>Sign Up</h2>
+        <input type="text" id="name" placeholder="Full Name">
+        <input type="number" id="age" placeholder="Age">
+        <select id="gender">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
+        <select id="role">
+            <option value="">Select Role</option>
+            <option value="Student">Student</option>
+            <option value="Professional">Professional</option>
+            <option value="Other">Other</option>
+        </select>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
-        <button class="btn login-btn" id="login-btn">Login</button>
-        <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+        <button class="btn signup-btn" id="signup-btn">Sign Up</button>
+        <p>Already have an account? <a href="login.html">Login</a></p>
         <p id="message"></p>
     </div>
     <script>
-        document.getElementById('login-btn').addEventListener('click', async function() {
+        document.getElementById('signup-btn').addEventListener('click', async function() {
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            const role = document.getElementById('role').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            if (!email || !password) {
-                document.getElementById('message').innerText = 'Please enter email and password';
+            if (!name || !age || !gender || !role || !email || !password) {
+                document.getElementById('message').innerText = 'Please fill in all required fields';
                 return;
             }
 
-            const response = await fetch('/login', {
+            const response = await fetch('/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ name, age, gender, role, email, password })
             });
             const result = await response.json();
             document.getElementById('message').innerText = result.message;
