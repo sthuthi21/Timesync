@@ -47,6 +47,35 @@ def login():
         })
         return jsonify({"message": "User created"})
 
+@app.route("/signup" , methods=["POST", "GET"])
+def signup():
+    if request.method == "GET":
+        return render_template("signup.html")
+    
+    data = request.json
+    name = data.get("Name")
+    age = data.get("age")
+    gender = data.get("gender")
+    role = data.get("role")
+    email = data.get("email")
+    password = data.get("password")
+
+    user = users_collection.find_one({"email": email})
+    if user:
+        return jsonify({"message": "User already exists"})
+    else:
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        users_collection.insert_one({
+            "name": name,
+            "age": age,
+            "gender": gender,
+            "role": role,
+            "email": email,
+            "password": hashed_password
+        })
+        return jsonify({"message": "User created"})
+
+
 @app.route("/logout")
 def logout():
     session.pop("user", None)  # Remove user session
