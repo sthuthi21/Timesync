@@ -151,18 +151,25 @@ def generate_timetable():
 
 @app.route("/get-schedule", methods=["GET"])
 def get_schedule():
+    if "user" not in session:
+        return jsonify({"error": "User session not found. Please log in."}), 401
+
+    user_email = session["user"]  # Get logged-in user's email
     date = request.args.get("date")
+
     if not date:
-        return jsonify([])  # Return empty if no date is provided
+        return jsonify({"error": "Date is required"}), 400
 
-    # Find the document matching the date
-    schedule_doc = schedules_collection.find_one({"date": date}, {"_id": 0, "schedule": 1})
+    # Fetch schedule for the logged-in user on the given date
+    schedule_doc = schedules_collection.find_one(
+        {"user": user_email, "date": date},
+        {"_id": 0, "schedule": 1}
+    )
 
-    # If no schedule found, return empty list
     if not schedule_doc or "schedule" not in schedule_doc:
-        return jsonify([])
+        return jsonify([])  # Return an empty list if no schedule is found
 
-    return jsonify(schedule_doc["schedule"])  # Return only the nested schedule array
+    return jsonify(schedule_doc["schedule"])  # Return the user's schedule
 
 # Run the app
 if __name__ == "__main__":
