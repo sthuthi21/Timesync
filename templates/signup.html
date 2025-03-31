@@ -50,6 +50,17 @@
             background: #28A745;
             color: white;
         }
+        .password-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -73,12 +84,20 @@
             <option value="Other">Other</option>
         </select>
         <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Password">
+        <div class="password-container">
+            <input type="password" id="password" placeholder="Password">
+            <span class="toggle-password" onclick="togglePassword()">Show</span>
+        </div>
         <button class="btn signup-btn" id="signup-btn">Sign Up</button>
-        <p>Already have an account? <a href="login.html">Login</a></p>
+        <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
         <p id="message"></p>
     </div>
     <script>
+        function togglePassword() {
+            const passwordField = document.getElementById("password");
+            passwordField.type = passwordField.type === "password" ? "text" : "password";
+        }
+
         document.getElementById('signup-btn').addEventListener('click', async function() {
             const name = document.getElementById('name').value;
             const age = document.getElementById('age').value;
@@ -88,7 +107,7 @@
             const password = document.getElementById('password').value;
 
             if (!name || !age || !gender || !role || !email || !password) {
-                document.getElementById('message').innerText = 'Please fill in all required fields';
+                document.getElementById('message').innerText = 'All fields are required';
                 return;
             }
 
@@ -97,13 +116,12 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, age, gender, role, email, password })
             });
+
             const result = await response.json();
             document.getElementById('message').innerText = result.message;
 
             if (response.ok) {
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 1000);
+                window.location.href = '/login';
             }
         });
     </script>

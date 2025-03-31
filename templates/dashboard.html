@@ -77,7 +77,7 @@
 <body>
     <div class="sidebar">
         <div>
-            <h2>Welcome, {{ user }}</h2>
+            <h2>Welcome, {{ user.name }}</h2>
             <h2>Dashboard</h2>
             <ul>
                 <li onclick="loadPage('{{ url_for('calendar') }}')">Calendar</li>
