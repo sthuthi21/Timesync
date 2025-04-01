@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #A8E6FF, #FFFFFF);
+            margin: 0;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: #007bff;
+            color: white;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+            margin: 50px auto;
+        }
+        h2 {
+            color: #007bff;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #E0E0E0;
+            border-radius: 5px;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .signup-btn {
+            background: #28A745;
+            color: white;
+        }
+        .password-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">TimeSync</div>
+    </nav>
+    <div class="container">
+        <h2>Sign Up</h2>
+        <input type="text" id="name" placeholder="Full Name">
+        <input type="number" id="age" placeholder="Age">
+        <select id="gender">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
+        <select id="role">
+            <option value="">Select Role</option>
+            <option value="Student">Student</option>
+            <option value="Professional">Professional</option>
+            <option value="Other">Other</option>
+        </select>
+        <input type="email" id="email" placeholder="Email">
+        <div class="password-container">
+            <input type="password" id="password" placeholder="Password">
+            <span class="toggle-password" onclick="togglePassword()">Show</span>
+        </div>
+        <button class="btn signup-btn" id="signup-btn">Sign Up</button>
+        <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+        <p id="message"></p>
+    </div>
+    <script>
+        function togglePassword() {
+            const passwordField = document.getElementById("password");
+            passwordField.type = passwordField.type === "password" ? "text" : "password";
+        }
+
+        document.getElementById('signup-btn').addEventListener('click', async function() {
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            const role = document.getElementById('role').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!name || !age || !gender || !role || !email || !password) {
+                document.getElementById('message').innerText = 'All fields are required';
+                return;
+            }
+
+            const response = await fetch('/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, age, gender, role, email, password })
+            });
+
+            const result = await response.json();
+            document.getElementById('message').innerText = result.message;
+
+            if (response.ok) {
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html>

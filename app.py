@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template , session
+from flask import Flask, request, jsonify, render_template, session
 from pymongo import MongoClient
 from flask_cors import CORS
 import os
@@ -6,46 +6,80 @@ import bcrypt
 from datetime import datetime, timedelta
 from bson import ObjectId  # Import this at the top
 
-# Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY")
-CORS(app)  # Enable CORS for frontend-backend communication
+app.secret_key = os.getenv("FLASK_SECRET_KEY")  # Ensure this is set in your environment
+CORS(app)
 
-# MongoDB Atlas configuration
+# MongoDB Configuration
 mongo_uri = os.getenv("MONGO_URI")
 client = MongoClient(mongo_uri)
-db = client.get_database("timesync")  # Database name
-users_collection = db.users  # Collection for user data
-schedules_collection = db.schedules  # Collection for generated schedules
+db = client.get_database("timesync")
+users_collection = db.users
+schedules_collection = db.schedules
 
 @app.route("/")
 def home():
     return render_template("landingpage.html")
 
-@app.route("/login" , methods=["POST", "GET"])
+@app.route("/signup", methods=["POST", "GET"])
+def signup():
+    if request.method == "GET":
+        return render_template("signup.html")
+    
+    try:
+        data = request.json
+        name = data.get("name")  # Fixed capitalization
+        age = data.get("age")
+        gender = data.get("gender")
+        role = data.get("role")
+        email = data.get("email")
+        password = data.get("password")
+
+        if not all([name, age, gender, role, email, password]):
+            return jsonify({"message": "All fields are required"}), 400
+
+        if users_collection.find_one({"email": email}):
+            return jsonify({"message": "User already exists"}), 409  # Conflict
+
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+
+        users_collection.insert_one({
+            "name": name,
+            "age": age,
+            "gender": gender,
+            "role": role,
+            "email": email,
+            "password": hashed_password.decode("utf-8")  # Store as string
+        })
+
+        return jsonify({"message": "User created successfully"}), 201  # Created
+
+    except Exception as e:
+        return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
+
+@app.route("/login", methods=["POST", "GET"])
 def login():
     if request.method == "GET":
         return render_template("login.html")
     
-    data = request.json
-    email = data.get("email")
-    password = data.get("password")
+    try:
+        data = request.json
+        email = data.get("email")
+        password = data.get("password")
 
-    user = users_collection.find_one({"email": email})
-    if user:
-        if bcrypt.checkpw(password.encode("utf-8"), user["password"]):
-            session.permanent = True  # Ensures session persists
-            session["user"] = email  # Store user session
+        user = users_collection.find_one({"email": email})
+        if not user:
+            return jsonify({"message": "User not found"}), 404  # Not Found
+
+        if bcrypt.checkpw(password.encode("utf-8"), user["password"].encode("utf-8")):
+            session.permanent = True
+            session["user"] = {"email": email, "name": user["name"] }
             return jsonify({"message": "Login successful"}), 200
         else:
-            return jsonify({"message": "Invalid password"}), 401
-    else:
-        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-        users_collection.insert_one({
-            "email": email,
-            "password": hashed_password
-        })
-        return jsonify({"message": "User created"})
+            return jsonify({"message": "Invalid password"}), 401  # Unauthorized
+
+    except Exception as e:
+        return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
 
 @app.route("/logout")
 def logout():
