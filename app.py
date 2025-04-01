@@ -57,29 +57,70 @@ def signup():
     except Exception as e:
         return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
 
+# @app.route("/login", methods=["POST", "GET"])
+# def login():
+#     if request.method == "GET":
+#         return render_template("login.html")
+    
+#     try:
+#         data = request.json
+#         print("Received data:", data)
+#         email = data.get("email")
+#         password = data.get("password")
+
+#         user = users_collection.find_one({"email": email})
+#         if not user:
+#             return jsonify({"message": "User not found"}), 404  # Not Found
+
+#         if bcrypt.checkpw(password.encode("utf-8"), user["password"].encode("utf-8")):
+#             session.permanent = True
+#             session["user"] = {"email": email, "name": user["name"] }
+#             return jsonify({"message": "Login successful"}), 200
+#         else:
+#             return jsonify({"message": "Invalid password"}), 401  # Unauthorized
+
+#     except Exception as e:
+#         return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
+
 @app.route("/login", methods=["POST", "GET"])
 def login():
     if request.method == "GET":
         return render_template("login.html")
-    
+
     try:
-        data = request.json
+        data = request.get_json() or request.form
+        print("Received data:", data)  # Debugging
+
         email = data.get("email")
         password = data.get("password")
 
+        if not email or not password:
+            return jsonify({"message": "Email and password are required"}), 400
+
         user = users_collection.find_one({"email": email})
+        print("User found:", user)  # Debugging
+
         if not user:
             return jsonify({"message": "User not found"}), 404  # Not Found
 
-        if bcrypt.checkpw(password.encode("utf-8"), user["password"].encode("utf-8")):
+        stored_password = user["password"]
+        print("Stored Password:", stored_password)  # Debugging
+
+        # Fix: Convert stored password to bytes if it's a string
+        if isinstance(stored_password, str):
+            stored_password = stored_password.encode("utf-8")
+
+        if bcrypt.checkpw(password.encode("utf-8"), stored_password):
             session.permanent = True
-            session["user"] = {"email": email, "name": user["name"] }
+            session["user"] = {"email": email, "name": user.get("name", "")}  # Fix missing 'name'
             return jsonify({"message": "Login successful"}), 200
         else:
             return jsonify({"message": "Invalid password"}), 401  # Unauthorized
 
     except Exception as e:
+        print("Internal Server Error:", str(e))  # Print the real error
         return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
+
 
 @app.route("/logout")
 def logout():
