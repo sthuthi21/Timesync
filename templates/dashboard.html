@@ -43,23 +43,30 @@
             background: rgba(255, 255, 255, 0.4);
         }
         .logout-container {
-            text-align: center;
-            padding-bottom: 20px;
-        }
-        .logout-btn {
-            background: red;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            text-align: center;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            display: inline-block;
-        }
-        .logout-btn:hover {
-            background: darkred;
-        }
+    text-align: center;
+    padding-bottom: 20px;
+    margin-top: auto; /* Pushes the logout button to the bottom */
+    display: flex;
+    justify-content: center;
+}
+
+.logout-btn {
+    background: red;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%; /* Make it fit the sidebar width */
+    max-width: 200px;
+}
+
+.logout-btn:hover {
+    background: darkred;
+}
+
         .main-content {
             margin-left: 270px;
             padding: 20px;
