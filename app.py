@@ -57,31 +57,6 @@ def signup():
     except Exception as e:
         return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
 
-# @app.route("/login", methods=["POST", "GET"])
-# def login():
-#     if request.method == "GET":
-#         return render_template("login.html")
-    
-#     try:
-#         data = request.json
-#         print("Received data:", data)
-#         email = data.get("email")
-#         password = data.get("password")
-
-#         user = users_collection.find_one({"email": email})
-#         if not user:
-#             return jsonify({"message": "User not found"}), 404  # Not Found
-
-#         if bcrypt.checkpw(password.encode("utf-8"), user["password"].encode("utf-8")):
-#             session.permanent = True
-#             session["user"] = {"email": email, "name": user["name"] }
-#             return jsonify({"message": "Login successful"}), 200
-#         else:
-#             return jsonify({"message": "Invalid password"}), 401  # Unauthorized
-
-#     except Exception as e:
-#         return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
-
 @app.route("/login", methods=["POST", "GET"])
 def login():
     if request.method == "GET":
@@ -279,6 +254,54 @@ def update_task_status():
                 task["status"] = "in-progress"
                 task["start_time"] = datetime.now().isoformat()
             elif action == "stop":
+                task["status"] = "completed"
+                start_time = datetime.fromisoformat(task.get("start_time", datetime.now().isoformat()))
+                task["time_spent"] = (datetime.now() - start_time).seconds // 60  # Time in minutes
+            else:
+                task["status"] = "skipped"
+                task["time_spent"] = 0
+
+    # Update the database
+    schedules_collection.update_one(
+        {"user": session["user"], "date": date},
+        {"$set": {"schedule": schedule}}
+    )
+
+    return jsonify({"message": "Task status updated successfully"})
+
+@app.route("/update-task-status", methods=["POST"])
+def update_task_status():
+    print("Received request at /update-task-status") 
+    if "user" not in session:
+        return jsonify({"error": "User not logged in"}), 401
+
+    data = request.json
+    date = data.get("date")
+    task_name = data.get("task")
+    action = data.get("action")  # "start" or "stop"
+
+    # Find user's schedule for the given date
+    schedule_doc = schedules_collection.find_one({"user": session["user"], "date": date})
+
+    if not schedule_doc:
+        return jsonify({"error": "No schedule found"}), 404
+
+    schedule = schedule_doc.get("schedule", [])
+
+    for task in schedule:
+        # Ignore breaks (No start/stop actions for them)
+        if task["task"] == "Break":
+            continue  
+
+        if task["task"] == task_name:
+            if action == "start":
+                task["status"] = "in-progress"
+                task["start_time"] = datetime.now().isoformat()
+            elif action == "stop":
+                print(f"Stopping task: {task_name}, Start Time: {task.get('start_time')}")
+                if "start_time" not in task:
+                    return jsonify({"error": "Task was never started"}), 400
+                
                 task["status"] = "completed"
                 start_time = datetime.fromisoformat(task.get("start_time", datetime.now().isoformat()))
                 task["time_spent"] = (datetime.now() - start_time).seconds // 60  # Time in minutes

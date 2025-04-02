@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
             // Map each event correctly
             eventsList.innerHTML = schedule.map(event => 
-                `<div class="event">${event.task || "No Task"} <span>${event.time || "No Time"}</span></div>`
+                `<div class="event">${event.task || "No Task"} <span>${event.time || "No Time"} ${event.status || ""}</span></div>`
             ).join("");
         } catch (error) {
             console.error("Error fetching schedule:", error);

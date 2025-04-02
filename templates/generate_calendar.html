@@ -168,20 +168,6 @@
                     </tr>
                 </thead>
                 <tbody id="scheduleBody">
-                    <!--<tr>
-                        <td>09:00 - 10:00</td>
-                        <td>Study DSA</td>
-                        <td class="high-priority">High</td>
-                        <td>1h</td>
-                        <td class="pending">Pending</td>
-                    </tr>
-                    <tr>
-                        <td>10:00 - 10:10</td>
-                        <td>Break</td>
-                        <td>-</td>
-                        <td>10m</td>
-                        <td class="pending">Pending</td>
-                    </tr>-->
                 </tbody>
             </table>
         </div>
@@ -190,19 +176,18 @@
 
     <script>
         let taskTimers = {};
+        
         function addTask() {
             let taskName = document.getElementById("taskInput").value;
             let priority = document.getElementById("priority").value;
             let duration = document.getElementById("duration").value;
             let scheduleBody = document.getElementById("scheduleBody");
-
-
+        
             if (taskName === "" || duration === "") {
                 alert("Please enter both task name and duration!");
                 return;
             }
-
-
+        
             let priorityClass = priority === "High" ? "high-priority" : "";
             let index = scheduleBody.children.length;
             let newRow = `
@@ -212,116 +197,133 @@
                     <td class="${priorityClass}">${priority}</td>
                     <td>${duration}</td>
                     <td>
-                        <button id="track-btn-${index}" onclick="trackTime(${index})">Track</button>
+                        <button id="track-btn-${index}" disabled>Track</button>
                     </td>
                 </tr>`;
-            
-
-
+        
             scheduleBody.innerHTML += newRow;
             document.getElementById("taskInput").value = "";
             document.getElementById("duration").value = "";
         }
-
+        
         function generateTimetable() {
-    const today = new Date(Date.now()).toISOString().split('T')[0];
-    let startTime = document.getElementById("startTime").value;
-    let endTime = document.getElementById("endTime").value;
-    let breakPref = document.getElementById("breakPref").value;
-    let breakDuration = document.getElementById("breakDuration").value;
+            const today = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000; // Convert IST offset (5.5 hours) to milliseconds
+            const istDate = new Date(today.getTime() + istOffset).toISOString().split("T")[0];
 
-    // Convert break preference and duration to minutes
-    let breakInterval = parseInt(breakPref.split(" ")[1]) * 60;
-    let breakDurationValue = parseInt(breakDuration.split(" ")[0]);
+            console.log(istDate); // Should now correctly show 2025-04-03
 
-    // Collect tasks from the table
-    let tasks = [];
-    let taskRows = document.querySelectorAll("#scheduleBody tr");
-    let timestamp = 1;
+            let startTime = document.getElementById("startTime").value;
+            let endTime = document.getElementById("endTime").value;
+            let breakPref = document.getElementById("breakPref").value;
+            let breakDuration = document.getElementById("breakDuration").value;
+        
+            let breakInterval = parseInt(breakPref.split(" ")[1]) * 60;
+            let breakDurationValue = parseInt(breakDuration.split(" ")[0]);
+        
+            let tasks = [];
+            let taskRows = document.querySelectorAll("#scheduleBody tr");
+            let timestamp = 1;
+        
+            taskRows.forEach((row, index) => {
+                let task = row.cells[1].innerText;
+                let priority = row.cells[2].innerText === "-" ? "None" : row.cells[2].innerText;
+                let durationText = row.cells[3].innerText;
+        
+                let duration = 0;
+                let hoursMatch = durationText.match(/(\d+)h/);
+                let minutesMatch = durationText.match(/(\d+)m/);
+        
+                if (hoursMatch) duration += parseInt(hoursMatch[1]) * 60;
+                if (minutesMatch) duration += parseInt(minutesMatch[1]);
+        
+                tasks.push({
+                    "task": task,
+                    "priority": priority,
+                    "duration": duration,
+                    "timestamp": timestamp++
+                });
+            });
+        
+            let requestData = {
+                "date": istDate,
+                "start_time": startTime,
+                "end_time": endTime,
+                "tasks": tasks,
+                "break_interval": breakInterval,
+                "break_duration": breakDurationValue
+            };
+        
+            fetch("http://127.0.0.1:5000/generate-timetable", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                let scheduleBody = document.getElementById("scheduleBody");
+                scheduleBody.innerHTML = "";
+        
+                data.forEach((entry, index) => {
+                    let priorityClass = entry.priority === "High" ? "high-priority" : (entry.priority === "None" ? "" : "");
+                    let taskName = entry.task.trim().toLowerCase();
+                    let trackButton = taskName === "break" 
+                            ? "" 
+                            : `<button id="track-btn-${index}" onclick="trackTime(${index})">Track</button>`;
 
-    taskRows.forEach((row, index) => {
-        let task = row.cells[1].innerText;
-        let priority = row.cells[2].innerText === "-" ? "None" : row.cells[2].innerText;
-        let durationText = row.cells[3].innerText;
-
-        // Convert "1h 30m" -> total minutes
-        let duration = 0;
-        let hoursMatch = durationText.match(/(\d+)h/);
-        let minutesMatch = durationText.match(/(\d+)m/);
-
-        if (hoursMatch) duration += parseInt(hoursMatch[1]) * 60;
-        if (minutesMatch) duration += parseInt(minutesMatch[1]);
-
-        tasks.push({
-            "task": task,
-            "priority": priority,
-            "duration": duration,
-            "timestamp": timestamp++
-        });
-    });
-
-    // Prepare request data
-    let requestData = {
-        "date": today,
-        "start_time": startTime,
-        "end_time": endTime,
-        "tasks": tasks,
-        "break_interval": breakInterval,
-        "break_duration": breakDurationValue
-    };
-
-    // Send POST request to Flask backend
-    fetch("http://127.0.0.1:5000/generate-timetable", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(requestData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        let scheduleBody = document.getElementById("scheduleBody");
-        scheduleBody.innerHTML = ""; // Clear existing schedule
-
-        data.forEach((entry, index) => {
-            let priorityClass = entry.priority === "High" ? "high-priority" : (entry.priority === "None" ? "" : "");
-            let newRow = `
-                <tr id="row-${index}">
-                    <td>${entry.time}</td>
-                    <td>${entry.task}</td>
-                    <td class="${priorityClass}">${entry.priority === "None" ? "-" : entry.priority}</td>
-                    <td>${entry.duration}</td>
-                    <td>
-                        <button id="track-btn-${index}" onclick="trackTime(${index})">Track</button>
-                    </td>
-                </tr>
-            `;
-            scheduleBody.innerHTML += newRow;
-        });
-    })
-    .catch(error => console.error("Error:", error));
-}
+                    let newRow = `
+                        <tr id="row-${index}">
+                        <td>${entry.time}</td>
+                        <td>${entry.task}</td>
+                        <td class="${priorityClass}">${entry.priority === "None" ? "-" : entry.priority}</td>
+                        <td>${entry.duration}</td>
+                        <td>${trackButton}</td>
+                        </tr>
+                    `;
+                    scheduleBody.innerHTML += newRow;
+                });
+            })
+            .catch(error => console.error("Error:", error));
+        }
 
         function trackTime(index) {
             let button = document.getElementById(`track-btn-${index}`);
+            let taskName = document.querySelector(`#row-${index} td:nth-child(2)`).innerText;
+            const today = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000; // Convert IST offset (5.5 hours) to milliseconds
+            const istDate = new Date(today.getTime() + istOffset).toISOString().split("T")[0];
+
+            console.log(istDate); // Should now correctly show 2025-04-03
+        
             if (!taskTimers[index]) {
-                // Start tracking time
                 taskTimers[index] = Date.now();
                 button.innerText = "Stop";
-            } else {
-                // Stop tracking time
-                let elapsedTime = Math.floor((Date.now() - taskTimers[index]) / 1000); // Convert ms to seconds
-                delete taskTimers[index];
-                button.innerText = "Track";
-                
-                // Send elapsed time to backend
-                fetch("http://127.0.0.1:5000/track-time", {
+        
+                // Send "start" action
+                fetch("http://127.0.0.1:5000/update-task-status", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ task_id: index, time_spent: elapsedTime })
+                    body: JSON.stringify({ date: istDate, task: taskName, action: "start" })
                 })
                 .then(response => response.json())
-                .then(data => console.log("Time tracked:", data))
+                .then(data => console.log("Start Response:", data))
+                .catch(error => console.error("Error:", error));
+            } else {
+                let elapsedTime = Math.floor((Date.now() - taskTimers[index]) / 1000);
+                delete taskTimers[index];
+                button.innerText = "Tracked";
+                button.disabled = true;
+        
+                // Send "stop" action
+                fetch("http://127.0.0.1:5000/update-task-status", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ date: istDate, task: taskName, action: "stop" })
+                })
+                .then(response => response.json())
+                .then(data => console.log("Stop Response:", data))  // Debugging line
                 .catch(error => console.error("Error:", error));
             }
         }
