@@ -18,7 +18,6 @@
             max-width: 900px;
             margin: auto;
             text-align: center;
-            overflow: hidden;
             padding: 20px;
         }
         .stats {
@@ -48,48 +47,89 @@
     <div class="container">
         <h2>Productivity Insights</h2>
         <div class="stats">
-            <div class="card"><strong>Tasks Completed</strong><br> 248 <br>12% increase</div>
-            <div class="card"><strong>Tasks Skipped</strong><br> 32 <br>8% decrease</div>
-            <div class="card"><strong>Avg. Completion Time</strong><br> 45m <br>Stable</div>
-            <div class="card"><strong>Productivity Score</strong><br> 8.4 <br>5% increase</div>
+            <div class="card" id="tasks-completed"><strong>Tasks Completed</strong><br>--</div>
+            <div class="card" id="tasks-skipped"><strong>Tasks Skipped</strong><br>--</div>
+            <div class="card" id="avg-time"><strong>Avg. Completion Time</strong><br>--</div>
+            <div class="card" id="productivity-score"><strong>Productivity Score</strong><br>--</div>
         </div>
         <div class="stats">
-            <div class="card"><strong>Recommended Work Hours</strong><br> Peak Performance: 9:00 AM - 11:00 AM</div>
-            <div class="card"><strong>Productivity Insights</strong><br> Most Productive Day: Tuesday (87%)<br> Best Focus Time: 9:00 AM - 11:00 AM</div>
+            <div class="card" id="recommended-hours"><strong>Recommended Work Hours</strong><br>--</div>
+            <div class="card" id="most-productive-day"><strong>Most Productive Day</strong><br>--</div>
         </div>
         <div class="chart-container">
             <canvas id="productivityChart"></canvas>
         </div>
     </div>
 
-
     <script>
-        const ctx = document.getElementById('productivityChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Completed Tasks',
-                    data: [40, 50, 60, 70, 65, 75, 72],
-                    backgroundColor: 'green'
-                }, {
-                    label: 'Skipped Tasks',
-                    data: [5, 6, 7, 8, 6, 7, 6],
-                    backgroundColor: 'red'
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
+        let productivityChart;
+
+        async function fetchInsights() {
+            try {
+                const response = await fetch("/get-insights");
+                const data = await response.json();
+
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+
+                // Update UI
+                document.getElementById("tasks-completed").innerHTML = `<strong>Tasks Completed</strong><br>${data.completed_tasks}`;
+                document.getElementById("tasks-skipped").innerHTML = `<strong>Tasks Skipped</strong><br>${data.skipped_tasks}`;
+                document.getElementById("avg-time").innerHTML = `<strong>Avg. Completion Time</strong><br>${data.avg_completion_time}`;
+                document.getElementById("productivity-score").innerHTML = `<strong>Productivity Score</strong><br>${data.productivity_score}`;
+                document.getElementById("recommended-hours").innerHTML = `<strong>Recommended Work Hours</strong><br>${data.recommended_work_hours}`;
+                document.getElementById("most-productive-day").innerHTML = `<strong>Most Productive Day</strong><br>${data.most_productive_day}`;
+
+                // Process daily stats for graph
+                const labels = Object.keys(data.daily_stats);
+                const completedData = labels.map(date => data.daily_stats[date].completed);
+                const skippedData = labels.map(date => data.daily_stats[date].skipped);
+
+                updateChart(labels, completedData, skippedData);
+            } catch (error) {
+                console.error("Error fetching insights:", error);
+            }
+        }
+
+        function updateChart(labels, completedData, skippedData) {
+            const ctx = document.getElementById('productivityChart').getContext('2d');
+
+            if (productivityChart) {
+                productivityChart.destroy();
+            }
+
+            productivityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Completed Tasks',
+                            data: completedData,
+                            backgroundColor: 'green',
+                        },
+                        {
+                            label: 'Skipped Tasks',
+                            data: skippedData,
+                            backgroundColor: 'red',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
                     }
                 }
-            }
-        });
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", fetchInsights);
+
     </script>
 </body>
 </html>
 
-
+ 

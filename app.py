@@ -5,6 +5,7 @@ import os
 import bcrypt
 from datetime import datetime, timedelta
 from bson import ObjectId  # Import this at the top
+from collections import defaultdict
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")  # Ensure this is set in your environment
@@ -277,6 +278,78 @@ def update_task_status():
     )
 
     return jsonify({"message": "Task status updated successfully"})
+
+@app.route("/get-insights", methods=["GET"])
+def get_insights():
+    if "user" not in session:
+        return jsonify({"error": "User not logged in"}), 401
+
+    user_email = session["user"]["email"]
+
+    # Fetch all schedules for the user
+    schedules = list(schedules_collection.find({"user_email": user_email}))
+
+    total_tasks = 0
+    completed_tasks = 0
+    skipped_tasks = 0
+    productivity_score = 0
+    total_completion_time = 0
+    total_completed_count = 0
+
+    daily_stats = defaultdict(lambda: {"completed": 0, "skipped": 0, "completion_times": []})
+
+    if schedules:
+        for schedule in schedules:
+            date = schedule.get("date", "Unknown")
+            for task in schedule["schedule"]:
+                if task["task"] != "Break":
+                    total_tasks += 1
+                    status = task.get("status", "").lower()
+                    time_spent = task.get("time_spent", 0)
+
+                    if status == "completed":
+                        completed_tasks += 1
+                        daily_stats[date]["completed"] += 1
+                        total_completion_time += time_spent
+                        total_completed_count += 1
+                        daily_stats[date]["completion_times"].append(time_spent)
+                    elif status == "skipped":
+                        skipped_tasks += 1
+                        daily_stats[date]["skipped"] += 1
+
+        # Calculate productivity score (Example Formula)
+        if total_tasks > 0:
+            productivity_score = round((completed_tasks / total_tasks) * 10, 2)
+
+        # Calculate Average Completion Time
+        avg_completion_time = (
+            round(total_completion_time / total_completed_count, 2) if total_completed_count > 0 else 0
+        )
+
+        # Determine the Most Productive Day
+        most_productive_day = max(daily_stats, key=lambda day: daily_stats[day]["completed"], default="Unknown")
+
+        # Determine Recommended Work Hours (Simplified: Based on earliest completed task)
+        task_times = []
+        for schedule in schedules:
+            for task in schedule["schedule"]:
+                if task.get("status", "").lower() == "completed":
+                    task_times.append(task["time"])
+
+        recommended_hours = min(task_times) if task_times else "Unknown"
+
+    insights = {
+        "completed_tasks": completed_tasks,
+        "skipped_tasks": skipped_tasks,
+        "avg_completion_time": f"{avg_completion_time} min",
+        "productivity_score": productivity_score,
+        "recommended_work_hours": recommended_hours,
+        "most_productive_day": most_productive_day,
+        "daily_stats": daily_stats,  # Sending per-day task data
+    }
+    
+    print(insights)  # Debugging Output
+    return jsonify(insights)
 
 # Run the app
 if __name__ == "__main__":
