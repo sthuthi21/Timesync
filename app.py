@@ -214,60 +214,21 @@ def get_schedule():
     current_time = datetime.now().strftime("%H:%M")
 
     for task in schedule_doc["schedule"]:
-        # If the task is not a "Break" and still pending, mark it as "skipped"
-        if task["task"] != "Break" and task.get("status", "pending") == "pending":
+        if task["task"] == "Break":
+            continue
+        
+        if task.get("status", "pending") == "pending":
             task["status"] = "skipped"
             task["time_spent"] = 0
         updated_schedule.append(task)
 
     # Update the database
-    schedules_collection.update_one(
+    schedules_collection.update_many(
         {"date": date}, 
         {"$set": {"schedule": updated_schedule}}
     )
 
     return jsonify(updated_schedule)
-
-@app.route("/update-task-status", methods=["POST"])
-def update_task_status():
-    if "user" not in session:
-        return jsonify({"error": "User not logged in"}), 401
-
-    data = request.json
-    date = data.get("date")
-    task_name = data.get("task")
-    action = data.get("action")  # "start" or "stop"
-
-    # Find user's schedule for the given date
-    schedule_doc = schedules_collection.find_one({"user": session["user"], "date": date})
-
-    if not schedule_doc:
-        return jsonify({"error": "No schedule found"}), 404
-
-    schedule = schedule_doc.get("schedule", [])
-
-    for task in schedule:
-        if task["task"] == "Break":
-            continue
-        if task["task"] == task_name:
-            if action == "start":
-                task["status"] = "in-progress"
-                task["start_time"] = datetime.now().isoformat()
-            elif action == "stop":
-                task["status"] = "completed"
-                start_time = datetime.fromisoformat(task.get("start_time", datetime.now().isoformat()))
-                task["time_spent"] = (datetime.now() - start_time).seconds // 60  # Time in minutes
-            else:
-                task["status"] = "skipped"
-                task["time_spent"] = 0
-
-    # Update the database
-    schedules_collection.update_one(
-        {"user": session["user"], "date": date},
-        {"$set": {"schedule": schedule}}
-    )
-
-    return jsonify({"message": "Task status updated successfully"})
 
 @app.route("/update-task-status", methods=["POST"])
 def update_task_status():
