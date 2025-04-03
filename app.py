@@ -192,7 +192,7 @@ def generate_timetable():
     
     # Store schedule in MongoDB
     schedules_collection.insert_one({
-        "user": session["user"],
+        "user_email": session["user"]["email"],
         "date": date,
         "schedule": schedule
     })
@@ -205,7 +205,7 @@ def get_schedule():
     if not date:
         return jsonify([])
 
-    schedule_doc = schedules_collection.find_one({"date": date})
+    schedule_doc = schedules_collection.find_one({"user_email": session["user"]["email"], "date": date})
 
     if not schedule_doc:
         return jsonify([])
@@ -242,7 +242,7 @@ def update_task_status():
     action = data.get("action")  # "start" or "stop"
 
     # Find user's schedule for the given date
-    schedule_doc = schedules_collection.find_one({"user": session["user"], "date": date})
+    schedule_doc = schedules_collection.find_one({"user_email": session["user"]["email"], "date": date})
 
     if not schedule_doc:
         return jsonify({"error": "No schedule found"}), 404
@@ -272,7 +272,7 @@ def update_task_status():
 
     # Update the database
     schedules_collection.update_one(
-        {"user": session["user"], "date": date},
+        {"user_email": session["user"]["email"], "date": date},
         {"$set": {"schedule": schedule}}
     )
 
