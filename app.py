@@ -224,7 +224,7 @@ def get_schedule():
         updated_schedule.append(task)
 
     # Update the database
-    schedules_collection.update_many(
+    schedules_collection.update_one(
         {"date": date}, 
         {"$set": {"schedule": updated_schedule}}
     )
